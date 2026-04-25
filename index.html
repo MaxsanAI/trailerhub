@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>TrailerHub - Trending Movies & Trailers</title>
-<meta name="description" content="Discover trending, new and action movie trailers with SEO insights, ratings and short previews.">
+<title>TrailerHub - Trending Movie Trailers</title>
+<meta name="description" content="Watch trending, new and action movie trailers. SEO insights, ratings and short cinematic previews.">
 
 <style>
 body {
   margin:0;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   background: radial-gradient(circle at top, #1a1a1a, #0b0b0b);
   color:#fff;
 }
@@ -18,11 +18,12 @@ body {
 h1 {
   padding:18px;
   margin:0;
+  font-size:22px;
 }
 
 .nav {
   display:flex;
-  gap:10px;
+  gap:8px;
   padding:10px 15px;
 }
 
@@ -35,6 +36,7 @@ h1 {
   cursor:pointer;
 }
 
+/* GRID */
 .grid {
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -47,11 +49,13 @@ h1 {
   border-radius:14px;
   overflow:hidden;
   cursor:pointer;
-  box-shadow:0 6px 20px rgba(0,0,0,0.5);
+  box-shadow:0 6px 18px rgba(0,0,0,0.5);
   transition:0.2s;
 }
 
-.card:hover { transform:scale(1.03); }
+.card:hover {
+  transform:scale(1.04);
+}
 
 .card img { width:100%; }
 
@@ -68,17 +72,28 @@ h1 {
   display:none;
   flex-direction:column;
   z-index:999;
+  overflow:hidden;
 }
 
+/* VIDEO FIX */
 .video-wrap {
   width:100%;
   aspect-ratio:16/9;
+  background:#000;
+  flex-shrink:0;
 }
 
 iframe {
   width:100%;
   height:100%;
   border:0;
+}
+
+/* CONTENT SCROLL */
+.content {
+  flex:1;
+  overflow-y:auto;
+  padding-bottom:20px;
 }
 
 .controls {
@@ -100,11 +115,22 @@ button {
   padding:12px;
   line-height:1.5;
   font-size:14px;
-  max-height:35vh;
-  overflow:auto;
 }
 
-a { color:#4da3ff; }
+.comments {
+  padding:12px;
+}
+
+input {
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+}
+
+a { color:#4da3ff; text-decoration:none; }
 </style>
 </head>
 
@@ -135,14 +161,40 @@ a { color:#4da3ff; }
     <iframe id="video"></iframe>
   </div>
 
-  <div class="desc" id="desc"></div>
+  <div class="content">
+
+    <div class="desc" id="desc"></div>
+
+    <div class="comments">
+      <div id="commentList"></div>
+      <input id="commentInput" placeholder="Add comment..." />
+      <button onclick="addComment()">Post</button>
+    </div>
+
+  </div>
 
 </div>
 
 <script>
 
-/* MONETAG */
 const monetag = "https://omg10.com/4/9027972";
+
+let filter = "all";
+let currentIndex = 0;
+
+/* SCORE */
+function getScore(t){
+  let base = t.title.length * 2;
+  if(t.type==="trending") base += 40;
+  if(t.type==="action") base += 25;
+  if(t.type==="new") base += 15;
+  return Math.min(99, base);
+}
+
+/* KEYWORDS */
+function getKeywords(t){
+  return `${t.title}, ${t.type}, movie trailer, cinema, hollywood, 2026`;
+}
 
 /* DATA */
 const trailers = [
@@ -158,40 +210,23 @@ const trailers = [
 {id:"32RAq6JzY-w",title:"Fast X",type:"trending"}
 ];
 
-let filter = "all";
-let currentIndex = 0;
-
-/* SCORE GENERATOR */
-function getScore(t){
-  let base = t.title.length * 3;
-  if(t.type==="trending") base += 40;
-  if(t.type==="action") base += 25;
-  if(t.type==="new") base += 15;
-  return Math.min(99, base);
-}
-
-/* KEYWORDS */
-function getKeywords(t){
-  return `${t.type} movie, ${t.title}, trailer, cinema, hollywood, 2026`;
-}
-
 /* FILTER */
 function setFilter(f){
-  filter = f;
+  filter=f;
   render();
 }
 
-function getFiltered(){
+function getList(){
   if(filter==="all") return trailers;
   return trailers.filter(t=>t.type===filter);
 }
 
 /* GRID */
-const grid = document.getElementById("grid");
+const grid=document.getElementById("grid");
 
 function render(){
   grid.innerHTML="";
-  getFiltered().forEach((t,i)=>{
+  getList().forEach((t,i)=>{
     const div=document.createElement("div");
     div.className="card";
 
@@ -208,40 +243,38 @@ render();
 
 /* PLAYER */
 function openPlayer(i){
-  const list = getFiltered();
-  currentIndex = i;
+  currentIndex=i;
   document.getElementById("player").style.display="flex";
-  load(list[currentIndex]);
+  load();
 }
 
-function load(t){
+function load(){
+  const t=getList()[currentIndex];
+
   document.getElementById("video").src =
-    "https://www.youtube.com/embed/" + t.id;
+    "https://www.youtube.com/embed/"+t.id;
 
-  const score = getScore(t);
-  const keywords = getKeywords(t);
+  const score=getScore(t);
 
-  document.getElementById("desc").innerHTML = `
+  document.getElementById("desc").innerHTML=`
     <h2>${t.title}</h2>
 
-    <p><strong>Trending Score:</strong> ${score}/100</p>
+    <p><strong>Trending score:</strong> ${score}/100</p>
 
-    <p><strong>Keywords:</strong> ${keywords}</p>
+    <p><strong>Keywords:</strong> ${getKeywords(t)}</p>
 
     <p>
-      ${t.title} is part of modern cinematic releases that focus on fast storytelling,
-      visual effects and strong audience engagement.
+      ${t.title} is a modern cinematic trailer showcasing visual storytelling,
+      action sequences and high production value typical for blockbuster films.
     </p>
 
     <p>
-      This trailer highlights key moments, character introductions and cinematic tone.
-      More updates and related movies are available through curated listings on
+      Explore more trending movie content and related previews on
       <a href="${monetag}" target="_blank">this page</a>.
     </p>
 
     <p>
-      Explore more trending trailers and movie insights updated daily across categories
-      like action, drama and sci-fi.
+      Discover daily updated trailers across action, sci-fi and drama categories.
     </p>
   `;
 
@@ -249,64 +282,63 @@ function load(t){
   loadComments();
 }
 
-/* NAV */
-function next(){
-  const list = getFiltered();
-  currentIndex = (currentIndex+1)%list.length;
-  load(list[currentIndex]);
-}
-
-function prev(){
-  const list = getFiltered();
-  currentIndex = (currentIndex-1+list.length)%list.length;
-  load(list[currentIndex]);
-}
-
 function closePlayer(){
   document.getElementById("player").style.display="none";
   document.getElementById("video").src="";
 }
 
+/* NAV */
+function next(){
+  const list=getList();
+  currentIndex=(currentIndex+1)%list.length;
+  load();
+}
+
+function prev(){
+  const list=getList();
+  currentIndex=(currentIndex-1+list.length)%list.length;
+  load();
+}
+
 /* LIKES */
 function like(){
-  const t = getFiltered()[currentIndex];
-  const key="likes_"+t.id;
-  let v = localStorage.getItem(key)||0;
+  const t=getList()[currentIndex];
+  const key="l_"+t.id;
+  let v=localStorage.getItem(key)||0;
   v++;
   localStorage.setItem(key,v);
   document.getElementById("likes").innerText=v;
 }
 
 function loadLikes(){
-  const t = getFiltered()[currentIndex];
-  const key="likes_"+t.id;
+  const t=getList()[currentIndex];
+  const key="l_"+t.id;
   document.getElementById("likes").innerText=localStorage.getItem(key)||0;
 }
 
 /* COMMENTS */
-function loadComments(){
-  const t = getFiltered()[currentIndex];
-  const key="c_"+t.id;
-  let arr = JSON.parse(localStorage.getItem(key)||"[]");
-
-  document.getElementById("desc").innerHTML +=
-    "<h3>Comments</h3>" +
-    arr.map(c=>`<p>💬 ${c}</p>`).join("");
-}
-
 function addComment(){
-  const t = getFiltered()[currentIndex];
+  const t=getList()[currentIndex];
   const input=document.getElementById("commentInput");
-  if(!input || !input.value) return;
+  if(!input.value) return;
 
   const key="c_"+t.id;
-  let arr = JSON.parse(localStorage.getItem(key)||"[]");
+  let arr=JSON.parse(localStorage.getItem(key)||"[]");
 
   arr.push(input.value);
   localStorage.setItem(key,JSON.stringify(arr));
 
   input.value="";
   loadComments();
+}
+
+function loadComments(){
+  const t=getList()[currentIndex];
+  const key="c_"+t.id;
+  let arr=JSON.parse(localStorage.getItem(key)||"[]");
+
+  document.getElementById("commentList").innerHTML=
+    arr.map(c=>`<p>💬 ${c}</p>`).join("");
 }
 
 </script>
