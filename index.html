@@ -21,7 +21,7 @@ h1 {
   font-size:22px;
 }
 
-/* GRID */
+/* GRID (Netflix feel) */
 .grid {
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -38,7 +38,9 @@ h1 {
   box-shadow:0 6px 18px rgba(0,0,0,0.5);
 }
 
-.card:hover { transform:scale(1.03); }
+.card:hover {
+  transform:scale(1.04);
+}
 
 .card img { width:100%; }
 
@@ -47,28 +49,15 @@ h1 {
   font-size:13px;
 }
 
-/* PLAYER = FIXED SAFE LAYOUT */
+/* PLAYER */
 .player {
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.96);
+  background:#0b0b0b;
   display:none;
   flex-direction:column;
   z-index:999;
-}
-
-/* 🔥 VIDEO FIX (NE GUTA CELO EKRAN) */
-.video-wrap {
-  width:100%;
-  max-height:38vh;   /* KLJUČ FIX */
-  background:#000;
-}
-
-iframe {
-  width:100%;
-  height:100%;
-  aspect-ratio:16/9;
-  border:0;
+  overflow-y:auto;
 }
 
 /* TOP CONTROLS */
@@ -77,6 +66,9 @@ iframe {
   justify-content:space-around;
   padding:10px;
   background:#111;
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
 button {
@@ -87,21 +79,43 @@ button {
   border-radius:10px;
 }
 
-/* SCROLL PANEL (FIX) */
-.content {
-  flex:1;
-  overflow-y:auto;
+/* YOUTUBE STYLE VIDEO */
+.video-container {
+  width:100%;
+  display:flex;
+  justify-content:center;
   padding:10px;
 }
 
+.video-wrap {
+  width:100%;
+  max-width:900px;
+  aspect-ratio:16/9;
+  background:#000;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+iframe {
+  width:100%;
+  height:100%;
+  border:0;
+}
+
+/* CONTENT */
+.content {
+  max-width:900px;
+  margin:0 auto;
+  padding:15px;
+}
+
 .desc {
-  font-size:14px;
-  line-height:1.5;
-  margin-bottom:10px;
+  font-size:15px;
+  line-height:1.6;
 }
 
 .comments {
-  margin-top:10px;
+  margin-top:15px;
 }
 
 input {
@@ -114,6 +128,7 @@ input {
 }
 
 a { color:#4da3ff; text-decoration:none; }
+
 </style>
 </head>
 
@@ -133,12 +148,14 @@ a { color:#4da3ff; text-decoration:none; }
     <button onclick="closePlayer()">✖</button>
   </div>
 
-  <!-- VIDEO (FIXED SIZE) -->
-  <div class="video-wrap">
-    <iframe id="video"></iframe>
+  <!-- VIDEO -->
+  <div class="video-container">
+    <div class="video-wrap">
+      <iframe id="video"></iframe>
+    </div>
   </div>
 
-  <!-- CONTENT PANEL -->
+  <!-- CONTENT -->
   <div class="content">
 
     <div class="desc" id="desc"></div>
@@ -159,22 +176,22 @@ const monetag = "https://omg10.com/4/9027972";
 
 /* DATA */
 const trailers = [
-{id:"uYPbbksJxIg",title:"Oppenheimer",type:"trending"},
-{id:"Way9Dexny3w",title:"Dune Part 2",type:"trending"},
-{id:"mqqft2x_Aa4",title:"The Batman",type:"action"},
-{id:"xy8aJw1vYHo",title:"Joker 2",type:"new"},
-{id:"73_1biulkYk",title:"Deadpool 3",type:"action"},
-{id:"TcMBFSGVi1c",title:"Avengers Endgame",type:"trending"},
-{id:"JfVOs4VSpmA",title:"Spider-Man",type:"action"},
-{id:"qEVUtrk8_B4",title:"John Wick 4",type:"action"},
-{id:"avz06PDqDbM",title:"Mission Impossible",type:"action"},
-{id:"32RAq6JzY-w",title:"Fast X",type:"trending"}
+{id:"uYPbbksJxIg",title:"Oppenheimer"},
+{id:"Way9Dexny3w",title:"Dune Part 2"},
+{id:"mqqft2x_Aa4",title:"The Batman"},
+{id:"xy8aJw1vYHo",title:"Joker 2"},
+{id:"73_1biulkYk",title:"Deadpool 3"},
+{id:"TcMBFSGVi1c",title:"Avengers Endgame"},
+{id:"JfVOs4VSpmA",title:"Spider-Man No Way Home"},
+{id:"qEVUtrk8_B4",title:"John Wick 4"},
+{id:"avz06PDqDbM",title:"Mission Impossible"},
+{id:"32RAq6JzY-w",title:"Fast X"}
 ];
 
-let currentIndex=0;
+let currentIndex = 0;
 
 /* GRID */
-const grid=document.getElementById("grid");
+const grid = document.getElementById("grid");
 
 trailers.forEach((t,i)=>{
   const div=document.createElement("div");
@@ -199,24 +216,24 @@ function openPlayer(i){
 function load(){
   const t=trailers[currentIndex];
 
-  document.getElementById("video").src=
+  document.getElementById("video").src =
     "https://www.youtube.com/embed/"+t.id;
 
   document.getElementById("desc").innerHTML=`
     <h2>${t.title}</h2>
 
     <p>
-      ${t.title} is a cinematic trailer showcasing modern Hollywood production,
-      visual effects and storytelling structure.
+      ${t.title} is a cinematic trailer showcasing modern blockbuster filmmaking,
+      visual effects and storytelling designed for global audiences.
     </p>
 
     <p>
-      Explore more related trailers and movie updates on
+      Discover more movie content and related trailers on
       <a href="${monetag}" target="_blank">this page</a>.
     </p>
 
     <p>
-      Trending category: <strong>${t.type}</strong>
+      Stay updated with trending movies, action hits and upcoming releases.
     </p>
   `;
 
