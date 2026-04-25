@@ -1,0 +1,79 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0b0b0b;
+  color: white;
+}
+
+.app {
+  display: flex;
+}
+
+.sidebar {
+  width: 200px;
+  background: #111;
+  padding: 20px;
+}
+
+.sidebar button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  background: #222;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+}
+
+header input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.card {
+  background: #1a1a1a;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.player {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hidden {
+  display: none;
+}
+
+.player-content {
+  width: 80%;
+  background: #111;
+  padding: 20px;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+}
