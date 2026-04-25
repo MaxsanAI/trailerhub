@@ -1,5 +1,4 @@
 export async function onRequest({ env }) {
-
   const res = await fetch(
     `https://api.themoviedb.org/3/movie/popular?api_key=${env.TMDB_API_KEY}`
   );
