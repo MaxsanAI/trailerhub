@@ -4,36 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>TrailerHub - Trending Movie Trailers</title>
-<meta name="description" content="Watch trending, new and action movie trailers. SEO insights, ratings and short cinematic previews.">
+<title>TrailerHub - Movie Trailers</title>
 
 <style>
 body {
   margin:0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top, #1a1a1a, #0b0b0b);
+  font-family: system-ui, sans-serif;
+  background:#0b0b0b;
   color:#fff;
 }
 
+/* HEADER */
 h1 {
-  padding:18px;
+  padding:16px;
   margin:0;
   font-size:22px;
-}
-
-.nav {
-  display:flex;
-  gap:8px;
-  padding:10px 15px;
-}
-
-.nav button {
-  background:#222;
-  border:1px solid #333;
-  color:#fff;
-  padding:6px 10px;
-  border-radius:8px;
-  cursor:pointer;
 }
 
 /* GRID */
@@ -49,13 +34,11 @@ h1 {
   border-radius:14px;
   overflow:hidden;
   cursor:pointer;
-  box-shadow:0 6px 18px rgba(0,0,0,0.5);
   transition:0.2s;
+  box-shadow:0 6px 18px rgba(0,0,0,0.5);
 }
 
-.card:hover {
-  transform:scale(1.04);
-}
+.card:hover { transform:scale(1.03); }
 
 .card img { width:100%; }
 
@@ -64,7 +47,7 @@ h1 {
   font-size:13px;
 }
 
-/* PLAYER */
+/* PLAYER = FIXED SAFE LAYOUT */
 .player {
   position:fixed;
   inset:0;
@@ -72,30 +55,23 @@ h1 {
   display:none;
   flex-direction:column;
   z-index:999;
-  overflow:hidden;
 }
 
-/* VIDEO FIX */
+/* 🔥 VIDEO FIX (NE GUTA CELO EKRAN) */
 .video-wrap {
   width:100%;
-  aspect-ratio:16/9;
+  max-height:38vh;   /* KLJUČ FIX */
   background:#000;
-  flex-shrink:0;
 }
 
 iframe {
   width:100%;
   height:100%;
+  aspect-ratio:16/9;
   border:0;
 }
 
-/* CONTENT SCROLL */
-.content {
-  flex:1;
-  overflow-y:auto;
-  padding-bottom:20px;
-}
-
+/* TOP CONTROLS */
 .controls {
   display:flex;
   justify-content:space-around;
@@ -111,14 +87,21 @@ button {
   border-radius:10px;
 }
 
+/* SCROLL PANEL (FIX) */
+.content {
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+}
+
 .desc {
-  padding:12px;
-  line-height:1.5;
   font-size:14px;
+  line-height:1.5;
+  margin-bottom:10px;
 }
 
 .comments {
-  padding:12px;
+  margin-top:10px;
 }
 
 input {
@@ -138,13 +121,6 @@ a { color:#4da3ff; text-decoration:none; }
 
 <h1>🎬 TrailerHub</h1>
 
-<div class="nav">
-  <button onclick="setFilter('all')">All</button>
-  <button onclick="setFilter('trending')">🔥 Trending</button>
-  <button onclick="setFilter('new')">🆕 New</button>
-  <button onclick="setFilter('action')">💥 Action</button>
-</div>
-
 <div class="grid" id="grid"></div>
 
 <!-- PLAYER -->
@@ -157,10 +133,12 @@ a { color:#4da3ff; text-decoration:none; }
     <button onclick="closePlayer()">✖</button>
   </div>
 
+  <!-- VIDEO (FIXED SIZE) -->
   <div class="video-wrap">
     <iframe id="video"></iframe>
   </div>
 
+  <!-- CONTENT PANEL -->
   <div class="content">
 
     <div class="desc" id="desc"></div>
@@ -179,23 +157,6 @@ a { color:#4da3ff; text-decoration:none; }
 
 const monetag = "https://omg10.com/4/9027972";
 
-let filter = "all";
-let currentIndex = 0;
-
-/* SCORE */
-function getScore(t){
-  let base = t.title.length * 2;
-  if(t.type==="trending") base += 40;
-  if(t.type==="action") base += 25;
-  if(t.type==="new") base += 15;
-  return Math.min(99, base);
-}
-
-/* KEYWORDS */
-function getKeywords(t){
-  return `${t.title}, ${t.type}, movie trailer, cinema, hollywood, 2026`;
-}
-
 /* DATA */
 const trailers = [
 {id:"uYPbbksJxIg",title:"Oppenheimer",type:"trending"},
@@ -210,36 +171,23 @@ const trailers = [
 {id:"32RAq6JzY-w",title:"Fast X",type:"trending"}
 ];
 
-/* FILTER */
-function setFilter(f){
-  filter=f;
-  render();
-}
-
-function getList(){
-  if(filter==="all") return trailers;
-  return trailers.filter(t=>t.type===filter);
-}
+let currentIndex=0;
 
 /* GRID */
 const grid=document.getElementById("grid");
 
-function render(){
-  grid.innerHTML="";
-  getList().forEach((t,i)=>{
-    const div=document.createElement("div");
-    div.className="card";
+trailers.forEach((t,i)=>{
+  const div=document.createElement("div");
+  div.className="card";
 
-    div.innerHTML=`
-      <img src="https://img.youtube.com/vi/${t.id}/hqdefault.jpg">
-      <h3>${t.title}</h3>
-    `;
+  div.innerHTML=`
+    <img src="https://img.youtube.com/vi/${t.id}/hqdefault.jpg">
+    <h3>${t.title}</h3>
+  `;
 
-    div.onclick=()=>openPlayer(i);
-    grid.appendChild(div);
-  });
-}
-render();
+  div.onclick=()=>openPlayer(i);
+  grid.appendChild(div);
+});
 
 /* PLAYER */
 function openPlayer(i){
@@ -249,32 +197,26 @@ function openPlayer(i){
 }
 
 function load(){
-  const t=getList()[currentIndex];
+  const t=trailers[currentIndex];
 
-  document.getElementById("video").src =
+  document.getElementById("video").src=
     "https://www.youtube.com/embed/"+t.id;
-
-  const score=getScore(t);
 
   document.getElementById("desc").innerHTML=`
     <h2>${t.title}</h2>
 
-    <p><strong>Trending score:</strong> ${score}/100</p>
-
-    <p><strong>Keywords:</strong> ${getKeywords(t)}</p>
-
     <p>
-      ${t.title} is a modern cinematic trailer showcasing visual storytelling,
-      action sequences and high production value typical for blockbuster films.
+      ${t.title} is a cinematic trailer showcasing modern Hollywood production,
+      visual effects and storytelling structure.
     </p>
 
     <p>
-      Explore more trending movie content and related previews on
+      Explore more related trailers and movie updates on
       <a href="${monetag}" target="_blank">this page</a>.
     </p>
 
     <p>
-      Discover daily updated trailers across action, sci-fi and drama categories.
+      Trending category: <strong>${t.type}</strong>
     </p>
   `;
 
@@ -289,20 +231,18 @@ function closePlayer(){
 
 /* NAV */
 function next(){
-  const list=getList();
-  currentIndex=(currentIndex+1)%list.length;
+  currentIndex=(currentIndex+1)%trailers.length;
   load();
 }
 
 function prev(){
-  const list=getList();
-  currentIndex=(currentIndex-1+list.length)%list.length;
+  currentIndex=(currentIndex-1+trailers.length)%trailers.length;
   load();
 }
 
 /* LIKES */
 function like(){
-  const t=getList()[currentIndex];
+  const t=trailers[currentIndex];
   const key="l_"+t.id;
   let v=localStorage.getItem(key)||0;
   v++;
@@ -311,14 +251,14 @@ function like(){
 }
 
 function loadLikes(){
-  const t=getList()[currentIndex];
+  const t=trailers[currentIndex];
   const key="l_"+t.id;
   document.getElementById("likes").innerText=localStorage.getItem(key)||0;
 }
 
 /* COMMENTS */
 function addComment(){
-  const t=getList()[currentIndex];
+  const t=trailers[currentIndex];
   const input=document.getElementById("commentInput");
   if(!input.value) return;
 
@@ -333,7 +273,7 @@ function addComment(){
 }
 
 function loadComments(){
-  const t=getList()[currentIndex];
+  const t=trailers[currentIndex];
   const key="c_"+t.id;
   let arr=JSON.parse(localStorage.getItem(key)||"[]");
 
