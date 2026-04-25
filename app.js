@@ -1,16 +1,23 @@
 const API_KEY = "YOUR_TMDB_API_KEY";
 const BASE = "https://api.themoviedb.org/3";
 
-let movies = [];
+let allMovies = [];
 let heroMovie = null;
 let currentMovie = null;
 
-async function fetchMovies() {
-  const res = await fetch(`${BASE}/movie/popular?api_key=${API_KEY}`);
-  const data = await res.json();
+async function fetchAll() {
 
-  const list = await Promise.all(
-    data.results.map(async (m) => {
+  const [trending, latest, top] = await Promise.all([
+    fetch(`${BASE}/movie/popular?api_key=${API_KEY}`).then(r => r.json()),
+    fetch(`${BASE}/movie/now_playing?api_key=${API_KEY}`).then(r => r.json()),
+    fetch(`${BASE}/movie/top_rated?api_key=${API_KEY}`).then(r => r.json())
+  ]);
+
+  const merge = [...trending.results, ...latest.results, ...top.results];
+
+  const enriched = await Promise.all(
+    merge.map(async (m) => {
+
       const v = await fetch(`${BASE}/movie/${m.id}/videos?api_key=${API_KEY}`);
       const vd = await v.json();
 
@@ -27,11 +34,12 @@ async function fetchMovies() {
     })
   );
 
-  movies = list.filter(Boolean).slice(0, 100);
+  allMovies = enriched.filter(Boolean).slice(0, 100);
 
-  heroMovie = movies[0];
+  heroMovie = allMovies[0];
   setHero(heroMovie);
-  renderMovies(movies);
+
+  renderSections();
 }
 
 function setHero(m) {
@@ -42,24 +50,31 @@ function setHero(m) {
   document.getElementById("heroDesc").innerText = m.overview;
 }
 
-function renderMovies(list) {
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
+function renderSections() {
+
+  renderRow("trending", allMovies.slice(0, 20));
+  renderRow("latest", allMovies.slice(20, 40));
+  renderRow("top", allMovies.slice(40, 60));
+}
+
+function renderRow(id, list) {
+
+  const row = document.getElementById(id);
+  row.innerHTML = "";
 
   list.forEach(m => {
+
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" />
-      <div class="card-info">
-        <h3>${m.title}</h3>
-        <span>⭐ ${m.vote_average}</span>
-      </div>
+      <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" />
+      <div class="title">${m.title}</div>
     `;
 
     card.onclick = () => openPlayer(m);
-    grid.appendChild(card);
+
+    row.appendChild(card);
   });
 }
 
@@ -89,11 +104,13 @@ function closePlayer() {
 }
 
 function searchMovies(q) {
-  const filtered = movies.filter(m =>
+  const filtered = allMovies.filter(m =>
     m.title.toLowerCase().includes(q.toLowerCase())
   );
 
-  renderMovies(filtered);
+  renderRow("trending", filtered);
+  renderRow("latest", filtered);
+  renderRow("top", filtered);
 }
 
-fetchMovies();
+fetchAll();
