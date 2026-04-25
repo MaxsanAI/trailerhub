@@ -1,42 +1,67 @@
-async function loadMovies() {
-  const res = await fetch("/movie");
-  const data = await res.json();
+async function safeFetch(url) {
+  const res = await fetch(url);
+  const text = await res.text();
 
-  if (!data.results) {
-    console.log("API ERROR:", data);
-    return;
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.log("BAD RESPONSE:", text);
+    return null;
   }
+}
 
-  const container = document.getElementById("popular");
+async function loadRow(endpoint, id) {
+  const data = await safeFetch(`/api/${endpoint}`);
+
+  if (!data || !data.results) return;
+
+  const container = document.getElementById(id);
   container.innerHTML = "";
 
-  data.results.forEach(movie => {
-    if (!movie.poster_path) return;
+  data.results.forEach(item => {
+    if (!item.poster_path) return;
 
-    const card = document.createElement("div");
-    card.className = "card";
+    const el = document.createElement("div");
+    el.className = "card";
 
-    card.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" />
-      <div class="card-title">${movie.title}</div>
+    el.innerHTML = `
+      <img src="https://image.tmdb.org/t/p/w500${item.poster_path}">
+      <div class="card-title">${item.title || item.name}</div>
     `;
 
-    card.onclick = () => openPlayer(movie);
-
-    container.appendChild(card);
+    el.onclick = () => openPlayer(item);
+    container.appendChild(el);
   });
 }
 
-function openPlayer(movie) {
+async function openPlayer(movie) {
+  const data = await safeFetch(`/api/video?id=${movie.id}`);
+
+  let trailer = null;
+
+  if (data?.results) {
+    trailer = data.results.find(v => v.site === "YouTube" && v.type === "Trailer");
+  }
+
   document.getElementById("player").classList.remove("hidden");
+
   document.getElementById("info").innerHTML = `
     <h2>${movie.title}</h2>
-    <p>${movie.overview || "No description"}</p>
+    <p>${movie.overview || ""}</p>
   `;
+
+  document.getElementById("video").innerHTML = trailer
+    ? `<iframe width="100%" height="400" src="https://www.youtube.com/embed/${trailer.key}" frameborder="0" allowfullscreen></iframe>`
+    : "<p>No trailer</p>";
 }
 
 function closePlayer() {
   document.getElementById("player").classList.add("hidden");
 }
 
-loadMovies();
+// INIT
+loadRow("popular", "popular");
+loadRow("trending", "trending");
+loadRow("toprated", "toprated");
+loadRow("upcoming", "upcoming");
+loadRow("series", "series");
