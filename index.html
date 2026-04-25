@@ -3,34 +3,56 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Trailer Hub</title>
+<title>TrailerHub Pro</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <nav class="nav">
-  <div class="logo">Trailer Hub</div>
+  <div class="logo">🎬 TrailerHub</div>
   <input id="search" placeholder="Search movies..." oninput="searchMovies(this.value)" />
 </nav>
 
-<header class="hero">
+<header class="hero" id="hero">
   <div class="hero-overlay">
     <h1 id="heroTitle">Loading...</h1>
     <p id="heroDesc"></p>
-    <button onclick="openHero()">▶ Play</button>
+    <button onclick="playHero()">▶ Play</button>
   </div>
 </header>
 
 <section class="container">
 
-  <h2>🔥 Trending</h2>
-  <div id="grid" class="grid"></div>
+  <div class="row">
+    <h2>🔥 Trending</h2>
+    <div id="trending" class="row-scroll"></div>
+  </div>
+
+  <div class="row">
+    <h2>🎬 Popular Movies</h2>
+    <div id="popular" class="row-scroll"></div>
+  </div>
+
+  <div class="row">
+    <h2>⭐ Top Rated</h2>
+    <div id="toprated" class="row-scroll"></div>
+  </div>
+
+  <div class="row">
+    <h2>🚀 Upcoming</h2>
+    <div id="upcoming" class="row-scroll"></div>
+  </div>
+
+  <div class="row">
+    <h2>📺 Series</h2>
+    <div id="series" class="row-scroll"></div>
+  </div>
 
 </section>
 
 <div id="player" class="player hidden">
   <div class="player-box">
-    <span onclick="closePlayer()" class="close">✖</span>
+    <span class="close" onclick="closePlayer()">✖</span>
     <div id="video"></div>
     <div id="info"></div>
   </div>
