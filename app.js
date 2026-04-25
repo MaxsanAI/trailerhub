@@ -1,67 +1,67 @@
-async function safeFetch(url) {
-  const res = await fetch(url);
+const TMDB = "https://api.themoviedb.org/3";
+
+async function fetchTMDB(path, key) {
+  const res = await fetch(`${TMDB}${path}?api_key=${key}`);
   const text = await res.text();
 
+  return text; // NE JSON.parse ovde → sigurnije
+}
+
+export async function onRequest({ request, env }) {
+  const url = new URL(request.url);
+  const route = url.pathname.replace("/api/", "");
+
   try {
-    return JSON.parse(text);
+    let result;
+
+    if (route === "popular") {
+      result = await fetchTMDB("/movie/popular", env.TMDB_API_KEY);
+    }
+
+    if (route === "trending") {
+      result = await fetchTMDB("/trending/all/day", env.TMDB_API_KEY);
+    }
+
+    if (route === "toprated") {
+      result = await fetchTMDB("/movie/top_rated", env.TMDB_API_KEY);
+    }
+
+    if (route === "upcoming") {
+      result = await fetchTMDB("/movie/upcoming", env.TMDB_API_KEY);
+    }
+
+    if (route === "series") {
+      result = await fetchTMDB("/tv/popular", env.TMDB_API_KEY);
+    }
+
+    if (route === "video") {
+      const id = url.searchParams.get("id");
+      if (!id) {
+        return json({ error: "missing id" }, 400);
+      }
+
+      result = await fetchTMDB(`/movie/${id}/videos`, env.TMDB_API_KEY);
+    }
+
+    if (!result) {
+      return json({ error: "route not found" }, 404);
+    }
+
+    return new Response(result, {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+
   } catch (e) {
-    console.log("BAD RESPONSE:", text);
-    return null;
+    return json({ error: "server crash", details: e.message }, 500);
   }
 }
 
-async function loadRow(endpoint, id) {
-  const data = await safeFetch(`/api/${endpoint}`);
-
-  if (!data || !data.results) return;
-
-  const container = document.getElementById(id);
-  container.innerHTML = "";
-
-  data.results.forEach(item => {
-    if (!item.poster_path) return;
-
-    const el = document.createElement("div");
-    el.className = "card";
-
-    el.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w500${item.poster_path}">
-      <div class="card-title">${item.title || item.name}</div>
-    `;
-
-    el.onclick = () => openPlayer(item);
-    container.appendChild(el);
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "Content-Type": "application/json" }
   });
 }
-
-async function openPlayer(movie) {
-  const data = await safeFetch(`/api/video?id=${movie.id}`);
-
-  let trailer = null;
-
-  if (data?.results) {
-    trailer = data.results.find(v => v.site === "YouTube" && v.type === "Trailer");
-  }
-
-  document.getElementById("player").classList.remove("hidden");
-
-  document.getElementById("info").innerHTML = `
-    <h2>${movie.title}</h2>
-    <p>${movie.overview || ""}</p>
-  `;
-
-  document.getElementById("video").innerHTML = trailer
-    ? `<iframe width="100%" height="400" src="https://www.youtube.com/embed/${trailer.key}" frameborder="0" allowfullscreen></iframe>`
-    : "<p>No trailer</p>";
-}
-
-function closePlayer() {
-  document.getElementById("player").classList.add("hidden");
-}
-
-// INIT
-loadRow("popular", "popular");
-loadRow("trending", "trending");
-loadRow("toprated", "toprated");
-loadRow("upcoming", "upcoming");
-loadRow("series", "series");
