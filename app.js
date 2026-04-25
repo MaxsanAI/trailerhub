@@ -1,45 +1,51 @@
-const API_KEY = "YOUR_TMDB_API_KEY";
-const BASE = "https://api.themoviedb.org/3";
-
-let allMovies = [];
+let movies = [];
 let heroMovie = null;
 let currentMovie = null;
 
 async function fetchAll() {
+  try {
+    const res = await fetch("/api/movies");
+    const data = await res.json();
 
-  const [trending, latest, top] = await Promise.all([
-    fetch(`${BASE}/movie/popular?api_key=${API_KEY}`).then(r => r.json()),
-    fetch(`${BASE}/movie/now_playing?api_key=${API_KEY}`).then(r => r.json()),
-    fetch(`${BASE}/movie/top_rated?api_key=${API_KEY}`).then(r => r.json())
-  ]);
+    console.log("TMDB RESPONSE:", data);
 
-  const merge = [...trending.results, ...latest.results, ...top.results];
+    const list = data.results ?? [];
 
-  const enriched = await Promise.all(
-    merge.map(async (m) => {
+    const enriched = await Promise.all(
+      list.map(async (m) => {
+        const v = await fetch(
+          `/api/movie-videos?id=${m.id}`
+        ).catch(() => null);
 
-      const v = await fetch(`${BASE}/movie/${m.id}/videos?api_key=${API_KEY}`);
-      const vd = await v.json();
+        if (!v) return null;
 
-      const trailer = vd.results.find(
-        x => x.site === "YouTube" && x.type === "Trailer"
-      );
+        const vd = await v.json();
 
-      if (!trailer) return null;
+        const trailer = vd.results?.find(
+          x => x.site === "YouTube" && x.type === "Trailer"
+        );
 
-      return {
-        ...m,
-        trailerKey: trailer.key
-      };
-    })
-  );
+        if (!trailer) return null;
 
-  allMovies = enriched.filter(Boolean).slice(0, 100);
+        return {
+          ...m,
+          trailerKey: trailer.key
+        };
+      })
+    );
 
-  heroMovie = allMovies[0];
-  setHero(heroMovie);
+    movies = enriched.filter(Boolean).slice(0, 100);
 
-  renderSections();
+    heroMovie = movies[0];
+
+    if (heroMovie) {
+      setHero(heroMovie);
+      renderMovies(movies);
+    }
+
+  } catch (err) {
+    console.error("API ERROR:", err);
+  }
 }
 
 function setHero(m) {
@@ -50,31 +56,21 @@ function setHero(m) {
   document.getElementById("heroDesc").innerText = m.overview;
 }
 
-function renderSections() {
-
-  renderRow("trending", allMovies.slice(0, 20));
-  renderRow("latest", allMovies.slice(20, 40));
-  renderRow("top", allMovies.slice(40, 60));
-}
-
-function renderRow(id, list) {
-
-  const row = document.getElementById(id);
-  row.innerHTML = "";
+function renderMovies(list) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
 
   list.forEach(m => {
-
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w300${m.poster_path}" />
+      <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" />
       <div class="title">${m.title}</div>
     `;
 
     card.onclick = () => openPlayer(m);
-
-    row.appendChild(card);
+    grid.appendChild(card);
   });
 }
 
@@ -104,13 +100,11 @@ function closePlayer() {
 }
 
 function searchMovies(q) {
-  const filtered = allMovies.filter(m =>
+  const filtered = movies.filter(m =>
     m.title.toLowerCase().includes(q.toLowerCase())
   );
 
-  renderRow("trending", filtered);
-  renderRow("latest", filtered);
-  renderRow("top", filtered);
+  renderMovies(filtered);
 }
 
 fetchAll();
