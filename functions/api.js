@@ -1,75 +1,62 @@
-const TMDB = "https://api.themoviedb.org/3";
-
-async function tmdb(path, key) {
-  const res = await fetch(`${TMDB}${path}?api_key=${key}`);
-  return await res.text(); // stabilno (ne puca JSON parser)
-}
-
 export async function onRequest({ request, env }) {
   const url = new URL(request.url);
-  const route = url.pathname.replace("/api/", "");
+  const path = url.pathname.replace("/api/", "");
+
+  const TMDB = "https://api.themoviedb.org/3";
 
   try {
+    let tmdbPath = null;
 
-    // 🎬 POPULAR MOVIES
-    if (route === "popular") {
-      const data = await tmdb("/movie/popular", env.TMDB_API_KEY);
-      return new Response(data, { headers: json() });
-    }
+    if (path === "popular") tmdbPath = "/movie/popular";
+    if (path === "trending") tmdbPath = "/trending/all/day";
+    if (path === "toprated") tmdbPath = "/movie/top_rated";
+    if (path === "upcoming") tmdbPath = "/movie/upcoming";
+    if (path === "series") tmdbPath = "/tv/popular";
 
-    // 🔥 TRENDING
-    if (route === "trending") {
-      const data = await tmdb("/trending/all/day", env.TMDB_API_KEY);
-      return new Response(data, { headers: json() });
-    }
-
-    // ⭐ TOP RATED
-    if (route === "toprated") {
-      const data = await tmdb("/movie/top_rated", env.TMDB_API_KEY);
-      return new Response(data, { headers: json() });
-    }
-
-    // 🚀 UPCOMING
-    if (route === "upcoming") {
-      const data = await tmdb("/movie/upcoming", env.TMDB_API_KEY);
-      return new Response(data, { headers: json() });
-    }
-
-    // 📺 SERIES
-    if (route === "series") {
-      const data = await tmdb("/tv/popular", env.TMDB_API_KEY);
-      return new Response(data, { headers: json() });
-    }
-
-    // 🎥 VIDEOS
-    if (route === "video") {
+    if (path === "video") {
       const id = url.searchParams.get("id");
-
       if (!id) {
-        return jsonResponse({ error: "missing id" }, 400);
+        return json({ error: "missing id" }, 400);
       }
 
-      const data = await tmdb(`/movie/${id}/videos`, env.TMDB_API_KEY);
-      return new Response(data, { headers: json() });
+      const res = await fetch(
+        `${TMDB}/movie/${id}/videos?api_key=${env.TMDB_API_KEY}`
+      );
+
+      return new Response(await res.text(), {
+        headers: jsonHeaders()
+      });
     }
 
-    return jsonResponse({ error: "not found" }, 404);
+    if (!tmdbPath) {
+      return json({ error: "route not found: " + path }, 404);
+    }
 
-  } catch (e) {
-    return jsonResponse({ error: "server crash", details: e.message }, 500);
+    const res = await fetch(
+      `${TMDB}${tmdbPath}?api_key=${env.TMDB_API_KEY}`
+    );
+
+    const text = await res.text();
+
+    return new Response(text, {
+      headers: jsonHeaders()
+    });
+
+  } catch (err) {
+    return json({ error: "server error", details: err.message }, 500);
   }
 }
 
-function json() {
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: jsonHeaders()
+  });
+}
+
+function jsonHeaders() {
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*"
   };
-}
-
-function jsonResponse(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: json()
-  });
 }
