@@ -4,30 +4,43 @@ let currentMovie = null;
 
 async function fetchAll() {
   try {
-    const res = await fetch("/api/movies");
-    const data = await res.json();
+    let allMovies = [];
 
-    const list = data.results || [];
+    // 🔥 koliko filmova (3=60, 5=100)
+    const pages = 3;
+
+    for (let p = 1; p <= pages; p++) {
+      const res = await fetch(`/api/movies?page=${p}`);
+      const data = await res.json();
+
+      if (data.results) {
+        allMovies = allMovies.concat(data.results);
+      }
+    }
 
     const enriched = await Promise.all(
-      list.map(async (m) => {
-        const v = await fetch(`/api/movie-videos?id=${m.id}`);
-        const vd = await v.json();
+      allMovies.map(async (m) => {
+        try {
+          const v = await fetch(`/api/movie-videos?id=${m.id}`);
+          const vd = await v.json();
 
-        const trailer = vd.results?.find(
-          x => x.site === "YouTube" && x.type === "Trailer"
-        );
+          const trailer = vd.results?.find(
+            x => x.site === "YouTube" && x.type === "Trailer"
+          );
 
-        if (!trailer) return null;
+          if (!trailer) return null;
 
-        return {
-          ...m,
-          trailerKey: trailer.key
-        };
+          return {
+            ...m,
+            trailerKey: trailer.key
+          };
+        } catch {
+          return null;
+        }
       })
     );
 
-    movies = enriched.filter(Boolean).slice(0, 100);
+    movies = enriched.filter(Boolean);
 
     heroMovie = movies[0];
 
