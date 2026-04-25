@@ -1,99 +1,103 @@
+let movies = [];
+let heroMovie = null;
+let currentMovie = null;
 
-async function safeFetch(url) {
+async function fetchAll() {
   try {
-    const res = await fetch(url);
-    const text = await res.text();
+    const res = await fetch("/api/movies");
+    const data = await res.json();
 
-    try {
-      return JSON.parse(text);
-    } catch (e) {
-      console.log("❌ INVALID JSON RESPONSE:", text);
-      return null;
+    const list = data.results || [];
+
+    const enriched = await Promise.all(
+      list.map(async (m) => {
+        const v = await fetch(`/api/movie-videos?id=${m.id}`);
+        const vd = await v.json();
+
+        const trailer = vd.results?.find(
+          x => x.site === "YouTube" && x.type === "Trailer"
+        );
+
+        if (!trailer) return null;
+
+        return {
+          ...m,
+          trailerKey: trailer.key
+        };
+      })
+    );
+
+    movies = enriched.filter(Boolean).slice(0, 100);
+
+    heroMovie = movies[0];
+
+    if (heroMovie) {
+      setHero(heroMovie);
+      renderMovies(movies);
     }
+
   } catch (err) {
-    console.log("❌ NETWORK ERROR:", err);
-    return null;
+    console.error("Cloudflare API error:", err);
   }
 }
 
-/* ---------------- ROW LOADER ---------------- */
+function setHero(m) {
+  document.querySelector(".hero").style.backgroundImage =
+    `url(https://image.tmdb.org/t/p/original${m.backdrop_path})`;
 
-async function loadRow(endpoint, id) {
-  const container = document.getElementById(id);
+  document.getElementById("heroTitle").innerText = m.title;
+  document.getElementById("heroDesc").innerText = m.overview;
+}
 
-  // loading state (NE ZAMRZAVA APP)
-  container.innerHTML = "<p style='opacity:0.5'>Loading...</p>";
+function renderMovies(list) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
 
-  const data = await safeFetch(`/api/${endpoint}`);
-
-  // FAIL SAFE
-  if (!data || !data.results) {
-    container.innerHTML = "<p style='color:red'>Failed to load</p>";
-    return;
-  }
-
-  container.innerHTML = "";
-
-  data.results.forEach(item => {
-    if (!item.poster_path) return;
-
+  list.forEach(m => {
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w500${item.poster_path}">
-      <div class="card-title">${item.title || item.name || "Untitled"}</div>
+      <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" />
+      <div class="title">${m.title}</div>
     `;
 
-    card.onclick = () => openPlayer(item);
-
-    container.appendChild(card);
+    card.onclick = () => openPlayer(m);
+    grid.appendChild(card);
   });
 }
 
-/* ---------------- PLAYER ---------------- */
-
-async function openPlayer(movie) {
-  document.getElementById("player").classList.remove("hidden");
-
-  document.getElementById("info").innerHTML = `
-    <h2>${movie.title || movie.name}</h2>
-    <p>${movie.overview || "No description available."}</p>
-  `;
-
-  const data = await safeFetch(`/api/video?id=${movie.id}`);
-
-  let trailer = null;
-
-  if (data && data.results) {
-    trailer = data.results.find(
-      v => v.site === "YouTube" && v.type === "Trailer"
-    );
-  }
-
-  document.getElementById("video").innerHTML = trailer
-    ? `<iframe width="100%" height="400"
-        src="https://www.youtube.com/embed/${trailer.key}"
-        frameborder="0"
-        allowfullscreen></iframe>`
-    : "<p style='color:white'>No trailer available</p>";
+function openHero() {
+  openPlayer(heroMovie);
 }
 
-/* ---------------- CLOSE PLAYER ---------------- */
+function openPlayer(m) {
+  currentMovie = m;
+
+  document.getElementById("player").classList.remove("hidden");
+
+  document.getElementById("video").innerHTML = `
+    <iframe width="100%" height="500"
+      src="https://www.youtube.com/embed/${m.trailerKey}?autoplay=1"
+      allowfullscreen></iframe>
+  `;
+
+  document.getElementById("info").innerHTML = `
+    <h2>${m.title}</h2>
+    <p>${m.overview}</p>
+  `;
+}
 
 function closePlayer() {
   document.getElementById("player").classList.add("hidden");
-  document.getElementById("video").innerHTML = "";
 }
 
-/* ---------------- INIT APP ---------------- */
+function searchMovies(q) {
+  const filtered = movies.filter(m =>
+    m.title.toLowerCase().includes(q.toLowerCase())
+  );
 
-function init() {
-  loadRow("popular", "popular");
-  loadRow("trending", "trending");
-  loadRow("toprated", "toprated");
-  loadRow("upcoming", "upcoming");
-  loadRow("series", "series");
+  renderMovies(filtered);
 }
 
-init();
+fetchAll();
