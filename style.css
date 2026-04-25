@@ -1,59 +1,93 @@
 body {
   margin: 0;
+  background: #0a0a0a;
+  color: white;
   font-family: Arial;
-  background: #0b0b0b;
-  color: white;
 }
 
-.app {
+/* HERO */
+.hero {
+  height: 70vh;
+  background-size: cover;
+  background-position: center;
+  position: relative;
   display: flex;
+  align-items: flex-end;
 }
 
-.sidebar {
-  width: 200px;
-  background: #111;
-  padding: 20px;
-}
-
-.sidebar button {
-  display: block;
+.hero-overlay {
   width: 100%;
-  margin: 10px 0;
-  background: #222;
-  color: white;
+  padding: 40px;
+  background: linear-gradient(to top, #0a0a0a, transparent);
+}
+
+.hero h1 {
+  font-size: 48px;
+  margin: 0;
+}
+
+.hero button {
+  margin-top: 10px;
+  padding: 12px 20px;
+  background: red;
   border: none;
-  padding: 10px;
+  color: white;
   cursor: pointer;
 }
 
-main {
-  flex: 1;
-  padding: 20px;
+/* NAV */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 30px;
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,0.85);
 }
 
-header input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 20px;
+.logo {
+  color: red;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.nav input {
+  padding: 8px;
+  width: 250px;
+}
+
+/* GRID */
+.container {
+  padding: 20px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 15px;
 }
 
 .card {
-  background: #1a1a1a;
-  padding: 10px;
+  background: #111;
+  border-radius: 10px;
+  overflow: hidden;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.05);
 }
 
 .card img {
   width: 100%;
-  border-radius: 8px;
 }
 
+.card-info {
+  padding: 10px;
+}
+
+/* PLAYER */
 .player {
   position: fixed;
   inset: 0;
@@ -63,17 +97,16 @@ header input {
   align-items: center;
 }
 
-.hidden {
-  display: none;
+.player-box {
+  width: 80%;
 }
 
-.player-content {
-  width: 80%;
-  background: #111;
-  padding: 20px;
+.hidden {
+  display: none;
 }
 
 .close {
   float: right;
   cursor: pointer;
+  font-size: 24px;
 }
